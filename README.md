@@ -295,7 +295,7 @@ const List = () => {
         handleGetList();
     }, [])
 
-    // 削除用の関数を追加
+    // 削除用の関数
     const handleDelete = async (item) => {
         console.log('click', item.id)
         try {
@@ -1188,7 +1188,7 @@ const List = () => {
         handleGetList();
     }, [])
 
-    // 削除用の関数を追加
+    // 削除用の関数
     const handleDelete = async (item) => {
         console.log('click', item.id)
         try {
@@ -1593,7 +1593,7 @@ const List = () => {
         handleGetList();
     }, [])
 
-    // 削除用の関数を追加
+    // 削除用の関数
     const handleDelete = async (item) => {
         console.log('click', item.id)
         try {
@@ -1880,7 +1880,7 @@ const List = () => {
         handleGetList();
     }, [])
 
-    // 削除用の関数を追加
+    // 削除用の関数
     const handleDelete = async (item) => {
         console.log('click', item.id)
         try {
