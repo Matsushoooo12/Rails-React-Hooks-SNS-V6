@@ -1,3 +1,4 @@
+import Cookies from "js-cookie";
 import client from "./client";
 
 export const getList = () => {
@@ -9,13 +10,31 @@ export const getDetail = (id) => {
 }
 
 export const createPost = (params) => {
-    return client.post('/posts', params);
-}
+    return client.post('/posts', params, {
+        headers: {
+            'access-token': Cookies.get('_access_token'),
+            client: Cookies.get('_client'),
+            uid: Cookies.get('_uid'),
+        },
+    });
+};
 
 export const updatePost = (id, params) => {
-    return client.patch(`/posts/${id}`, params);
+    return client.patch(`/posts/${id}`, params, {
+        headers: {
+            'access-token': Cookies.get('_access_token'),
+            client: Cookies.get('_client'),
+            uid: Cookies.get('_uid'),
+        },
+    });
 }
 
 export const deletePost = (id) => {
-    return client.delete(`/posts/${id}`);
+    return client.delete(`/posts/${id}`, {
+        headers: {
+            'access-token': Cookies.get('_access_token'),
+            client: Cookies.get('_client'),
+            uid: Cookies.get('_uid'),
+        },
+    });
 }

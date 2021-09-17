@@ -4,6 +4,7 @@ import { useHistory, Link } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import { AuthContext } from '../App';
 import { signOut } from '../api/auth';
+import ListTable from '../commons/ListTable';
 
 const List = () => {
     const {loading, isSignedIn, setIsSignedIn, currentUser} = useContext(AuthContext);
@@ -96,36 +97,14 @@ const List = () => {
                 <p>ログイン状態です</p>
             )}
             <AuthButtons />
+            <Link to="/user/posts">自分の投稿一覧</Link>
             <h1>Home</h1>
             <button onClick={() => history.push('/new')}>新規作成</button>
-            <table>
-                <thead>
-                    <tr>
-                        <th>タイトル</th>
-                        <th>内容</th>
-                        <th colSpan="1"></th>
-                        <th colSpan="1"></th>
-                        <th colSpan="1"></th>
-                    </tr>
-                </thead>
-                {dataList.map((item, index) => (
-                    <tbody key={index}>
-                        <tr>
-                            <td>{item.title}</td>
-                            <td>{item.content}</td>
-                            <td>
-                                <Link to={`/edit/${item.id}`}>更新</Link>
-                            </td>
-                            <td>
-                                <Link to={`/post/${item.id}`}>詳細へ</Link>
-                            </td>
-                            <td>
-                                <button onClick={() => handleDelete(item)}>削除</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                ))}
-            </table>
+            <ListTable
+                dataList={dataList}
+                handleDelete={handleDelete}
+                currentUser={currentUser}
+            />
         </div>
     )
 }
