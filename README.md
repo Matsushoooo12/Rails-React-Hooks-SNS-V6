@@ -1403,12 +1403,10 @@ class Api::V1::PostsController < ApplicationController
     def update # 修正
         post = Post.find(params[:id])
         if current_api_v1_user.id === post.user_id
-            ActiveRecord::Base.transaction do
-                if post.update(post_params)
-                    render json: post
-                else
-                    render json: post.errors, status: 422
-                end
+            if post.update(post_params)
+                render json: post
+            else
+                render json: post.errors, status: 422
             end
         else
             render json: {message: 'can not update data'}, status: 422
