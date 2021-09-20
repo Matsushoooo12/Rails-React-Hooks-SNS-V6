@@ -1965,3 +1965,16 @@ export const deletePost = (id) => {
   });
 };
 ```
+
+# このリポジトリからクローンした際にサーバーを起動するための手順
+
+Railsプロジェクトディレクトリ上
+```
+$ rails db:migrate
+```
+
+Reactプロジェクトディレクトリ上
+```
+$ rm -rf node_modules
+$ npm install
+```
