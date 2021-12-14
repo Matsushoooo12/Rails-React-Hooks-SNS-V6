@@ -1402,7 +1402,7 @@ class Api::V1::PostsController < ApplicationController
 
     def update # 修正
         post = Post.find(params[:id])
-        if current_api_v1_user.id === post.user_id
+        if current_api_v1_user.id == post.user_id
             if post.update(post_params)
                 render json: post
             else
