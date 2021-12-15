@@ -1,5 +1,20 @@
 # Rails API + React Hooks [SNS 編]
 
+# このリポジトリからクローンした際にサーバーを起動するための手順
+
+Rails プロジェクトディレクトリ上
+
+```
+$ rails db:migrate
+```
+
+React プロジェクトディレクトリ上
+
+```
+$ rm -rf node_modules
+$ npm install
+```
+
 # 投稿機能
 
 ## Rails プロジェクト作成
@@ -1966,15 +1981,148 @@ export const deletePost = (id) => {
 };
 ```
 
-# このリポジトリからクローンした際にサーバーを起動するための手順
+# いいね機能作成
 
-Railsプロジェクトディレクトリ上
+## Like モデル作成(Backend)
+
+```
+$ rails g model Like user:references post:references
+```
+
+マイグレーションファイル
+
+```
+class CreateMessages < ActiveRecord::Migration[6.1]
+  def change
+    create_table :messages do |t|
+      t.references :user
+      t.references :post
+      t.timestamps
+    end
+  end
+end
+```
+
 ```
 $ rails db:migrate
 ```
 
-Reactプロジェクトディレクトリ上
+## Like アソシエーション追加
+
+model/user.rb
+
 ```
-$ rm -rf node_modules
-$ npm install
+# 追加
+has_many :likes
+```
+
+model/post.rb
+
+```
+# 追加
+has_many :likes
+```
+
+model/like.rb
+
+```
+belongs_to :user
+belongs_to :post
+```
+
+## likes コントローラー作成
+
+```
+$ rails g controller api/v1/likes
+```
+
+controllers/api/v1/likes
+
+```
+class Api::V1::LikesController < ApplicationController
+    before_action :authenticate_api_v1_user!, only: ['create']
+
+    def create
+        like = Like.new(post_id: params[:id], user_id: current_api_v1_user.id)
+
+        if like.save
+            render json: like
+        else
+            render json: like.errors, status: 422
+        end
+    end
+
+    def destroy
+        like = Like.find_by(user_id: current_api_v1_user.id, post_id: params[:id])
+        if like.destroy
+            render json: like
+        else
+            render json: like.errors, status: 422
+        end
+    end
+end
+```
+
+## like ルーティング設定
+
+```
+# 追加
+resources :posts do
+    member do
+        resources :likes, only: ["create"]
+    end
+end
+resources :likes, only: ["destroy"]
+```
+
+ルーティング確認
+
+```
+$ rails routes | grep likes
+
+likes POST   api/v1/posts/:id/likes(.:format)    likes#create
+```
+
+## Postman でテスト
+
+サインイン情報に含まれる以下の情報を likes のエンドポイント API に入れる
+
+- access-token
+- client
+- uid
+
+いいね作成
+
+http://localhost:3001/api/v1/posts/1/likes
+
+ヘッダー情報にログイン情報で得た`access-token, client, uid`を入れて send ボタンを押す
+
+成功したら以下のような response が返ってくる
+
+```
+{
+    "id": 2,
+    "user_id": 3,
+    "post_id": 2,
+    "created_at": "2021-12-15T17:54:00.684Z",
+    "updated_at": "2021-12-15T17:54:00.684Z"
+}
+```
+
+いいね削除
+
+http://localhost:3001/api/v1/likes/1
+
+ヘッダー情報にログイン情報で得た`access-token, client, uid`を入れて send ボタンを押す
+
+成功したら以下のような response が返ってくる
+
+```
+{
+    "id": 1,
+    "user_id": 3,
+    "post_id": 1,
+    "created_at": "2021-12-15T18:22:09.657Z",
+    "updated_at": "2021-12-15T18:22:09.657Z"
+}
 ```
