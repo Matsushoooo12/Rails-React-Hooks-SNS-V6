@@ -2080,7 +2080,8 @@ resources :likes, only: ["destroy"]
 ```
 $ rails routes | grep likes
 
-likes POST   api/v1/posts/:id/likes(.:format)    likes#create
+api_v1_likes POST   /api/v1/posts/:id/likes(.:format)    api/v1/likes#create
+api_v1_like DELETE  /api/v1/likes/:id(.:format)   api/v1/likes#destroy
 ```
 
 ## Postman でテスト
