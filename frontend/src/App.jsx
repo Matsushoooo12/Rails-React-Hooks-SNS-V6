@@ -72,7 +72,6 @@ function App() {
             <Route path="/post/:id" component={Detail} />
             <Route exact path="/new" component={New} />
             <Route path="/edit/:id" component={Edit} />
-            {/* <Route exact path="/user/posts" component={UserPost} /> */}
             <Route path="/users/:id" component={Profile} />
           </Private>
         </Switch>

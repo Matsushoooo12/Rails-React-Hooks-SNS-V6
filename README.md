@@ -2387,3 +2387,56 @@ src/commons/ListTable.jsx
     <Link to={`/users/${item.userId}`}>{item.email}</Link>
 </td>
 ```
+
+## プロフィールページをログインユーザーとそれ以外で切り分ける
+
+src/components/users/Profile.jsx
+
+```
+import { useState, useEffect, useContext # 追加 } from "react";
+import { useHistory, useParams } from "react-router-dom";
+import { getUser } from "../../api/user";
+# 追加
+import { AuthContext } from "../../App";
+
+export const Profile = () => {
+    # 追加
+  const { currentUser } = useContext(AuthContext);
+  const [user, setUser] = useState({});
+  const history = useHistory();
+  const query = useParams();
+
+  const handleGetUser = async (query) => {
+    try {
+      const res = await getUser(query.id);
+      console.log(res.data);
+      setUser(res.data);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  useEffect(() => {
+    handleGetUser(query);
+  }, [query]);
+  return (
+    <>
+      <h1>ユーザー</h1>
+      <div>メールアドレス：{user.email}</div>
+      # 追加
+      {user.id === currentUser.id && <p>現在のユーザーです</p>}
+      <div>
+        {user.posts?.map((post) => (
+          <div key={post.id}>
+            <p>{post.title}</p>
+            <p>{post.content}</p>
+            <p>いいね{post.likes.length}</p>
+          </div>
+        ))}
+      </div>
+      <button onClick={() => history.push("/")}>戻る</button>
+    </>
+  );
+};
+
+```
