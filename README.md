@@ -2141,7 +2141,7 @@ import client from "./client";
 export const createLike = (id) => {
   return client.post(
     `/posts/${id}/likes`,
-    {},
+    {}, // createにはデータ追加の箱が必要
     {
       headers: {
         "access-token": Cookies.get("_access_token"),
