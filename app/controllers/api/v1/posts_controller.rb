@@ -2,7 +2,18 @@ class Api::V1::PostsController < ApplicationController
     before_action :authenticate_api_v1_user!, only: [:create, :update, :destroy]
     def index
         posts = Post.all.order(created_at: :desc)
-        render json: posts
+        posts_array = posts.map do |post|
+            {
+                id: post.id,
+                user_id: post.user_id,
+                title: post.title,
+                content: post.content,
+                email: post.user.email,
+                created_at: post.created_at,
+                likes: post.likes.map {|like| {id: like.id, user_id: like.user_id, post_id: like.post_id}}
+            }
+        end
+        render json: posts_array
     end
 
     def show

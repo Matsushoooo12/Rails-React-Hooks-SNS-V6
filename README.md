@@ -2127,3 +2127,141 @@ http://localhost:3001/api/v1/likes/1
     "updated_at": "2021-12-15T18:22:09.657Z"
 }
 ```
+
+## いいね機能表示(Frontend)
+
+### API エンドポイント作成
+
+src/api/like.js
+
+```
+import Cookies from "js-cookie";
+import client from "./client";
+
+export const createLike = (id) => {
+  return client.post(
+    `/posts/${id}/likes`,
+    {},
+    {
+      headers: {
+        "access-token": Cookies.get("_access_token"),
+        client: Cookies.get("_client"),
+        uid: Cookies.get("_uid"),
+      },
+    }
+  );
+};
+
+export const deleteLike = (id) => {
+  return client.delete(`/likes/${id}`, {
+    headers: {
+      "access-token": Cookies.get("_access_token"),
+      client: Cookies.get("_client"),
+      uid: Cookies.get("_uid"),
+    },
+  });
+};
+
+```
+
+ちゃんとヘッダーに`"access-token", client, uid`を入れるのを忘れない。
+
+### いいね機能の API 関数作成
+
+posts 一覧を表示しているページでいいね機能の関数を作成して、map で回した id をその関数に入れる。
+
+src/commons/ListTable.jsx
+
+```
+import React, { memo } from "react";
+import { Link } from "react-router-dom";
+import { createLike, deleteLike } from "../api/like";
+
+const ListTable = memo((props) => {
+  const { dataList, handleDelete, currentUser, handleGetList // 追加 } = props;
+
+　// ここから追加
+  const handleCreateLike = async (item) => {
+    try {
+      const res = await createLike(item.id);
+      console.log(res.data);
+      handleGetList();
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const handleDeleteLike = async (item) => {
+    try {
+      const res = await deleteLike(item.id);
+      console.log(res.data);
+      handleGetList();
+    } catch (e) {
+      console.log(e);
+    }
+  };
+  // ここまで追加
+
+  return (
+    <table>
+      <thead>
+        <tr>
+          <th>メールアドレス</th>
+          <th>タイトル</th>
+          <th>内容</th>
+          // 追加
+          <th>いいね</th>
+          <th></th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {dataList.map((item) => (
+          <tr key={item.id}>
+            <td>{item.email}</td>
+            <td>{item.title}</td>
+            <td>{item.content}</td>
+            // ここから追加
+            <td>
+              {item.likes.find((like) => like.userId === currentUser.id) ? (
+                <p onClick={() => handleDeleteLike(item)}>
+                  ♡{item.likes.length}
+                </p>
+              ) : (
+                <p onClick={() => handleCreateLike(item)}>
+                  ♡{item.likes.length}
+                </p>
+              )}
+            </td>
+            // ここまで追加
+            {currentUser.id === item.userId ? (
+              <td>
+                <Link to={`/edit/${item.id}`}>更新</Link>
+              </td>
+            ) : (
+              <td></td>
+            )}
+            <td>
+              <Link to={`/post/${item.id}`}>詳細へ</Link>
+            </td>
+            {currentUser.id === item.userId ? (
+              <td>
+                <button onClick={() => handleDelete(item)}>削除</button>
+              </td>
+            ) : (
+              <td></td>
+            )}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+});
+
+export default ListTable;
+
+```
+
+いいね機能の条件分岐は find メソッドを使い、likes 配列の中の userId の中に
+currentUser.id が入っているかを調べ、入っていたら削除、無かったら作成するような作りにする。
