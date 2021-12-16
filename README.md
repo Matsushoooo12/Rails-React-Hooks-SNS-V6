@@ -2185,7 +2185,7 @@ const ListTable = memo((props) => {
     try {
       const res = await createLike(item.id);
       console.log(res.data);
-      handleGetList();
+      handleGetList(); // posts一覧を取得
     } catch (e) {
       console.log(e);
     }
@@ -2195,7 +2195,7 @@ const ListTable = memo((props) => {
     try {
       const res = await deleteLike(item.id);
       console.log(res.data);
-      handleGetList();
+      handleGetList(); // posts一覧を取得
     } catch (e) {
       console.log(e);
     }
