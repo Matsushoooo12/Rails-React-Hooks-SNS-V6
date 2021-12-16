@@ -2280,3 +2280,110 @@ const handleCreateLike = async (item) => {
     }
   };
 ```
+
+## プロフィールページ作成
+
+一旦、UserPost コンポーネントを削除しておきましょう。
+
+プロフィールページには、ユーザー情報、ユーザー投稿情報が入ります。
+
+### プロフィールページに表示するための JSON データを作成(Backend)
+
+app/controllers/api/v1/users_controller.rb
+
+```
+# 追加
+def show
+    user = User.find(params[:id])
+    posts = Post.where(user_id: user.id)
+    user_list = {
+        id: user.id,
+        email: user.email,
+        # ユーザーが投稿した情報をmapで回し、情報を入れている。
+        posts: posts.map {|post| {id: post.id, title: post.title, content: post.content, likes: post.likes}},
+    }
+    render json: user_list
+end
+```
+
+### API 設定(Frontend)
+
+src/api/user.js
+
+```
+export const getUser = (id) => {
+  return client.get(`/users/${id}`, {
+    headers: {
+      "access-token": Cookies.get("_access_token"),
+      client: Cookies.get("_client"),
+      uid: Cookies.get("_uid"),
+    },
+  });
+};
+```
+
+### ルーティング作成
+
+src/App.jsx
+
+```
+# 追加
+<Route path="/users/:id" component={Profile} />
+```
+
+### Profile コンポーネント作成
+
+src/components/users/Profile.jsx
+
+```
+import { useState, useEffect } from "react";
+import { useHistory, useParams } from "react-router-dom";
+import { getUser } from "../../api/user";
+
+export const Profile = () => {
+  const [user, setUser] = useState({});
+  const history = useHistory();
+  const query = useParams();
+
+  const handleGetUser = async (query) => {
+    try {
+      const res = await getUser(query.id);
+      console.log(res.data);
+      setUser(res.data);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  useEffect(() => {
+    handleGetUser(query);
+  }, [query]);
+  return (
+    <>
+      <h1>ユーザー</h1>
+      <div>メールアドレス：{user.email}</div>
+      <div>
+        {user.posts?.map((post) => (
+          <div key={post.id}>
+            <p>{post.title}</p>
+            <p>{post.content}</p>
+            <p>いいね{post.likes.length}</p>
+          </div>
+        ))}
+      </div>
+      <button onClick={() => history.push("/")}>戻る</button>
+    </>
+  );
+};
+```
+
+### 投稿一覧画面のユーザーメールアドレスを Profile に遷移するリンクにする
+
+src/commons/ListTable.jsx
+
+```
+# 追加
+<td>
+    <Link to={`/users/${item.userId}`}>{item.email}</Link>
+</td>
+```

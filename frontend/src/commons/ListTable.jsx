@@ -41,7 +41,9 @@ const ListTable = memo((props) => {
       <tbody>
         {dataList.map((item) => (
           <tr key={item.id}>
-            <td>{item.email}</td>
+            <td>
+              <Link to={`/users/${item.userId}`}>{item.email}</Link>
+            </td>
             <td>{item.title}</td>
             <td>{item.content}</td>
             <td>
