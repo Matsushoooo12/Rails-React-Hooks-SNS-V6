@@ -8,7 +8,6 @@ import SignIn from "./components/users/SignIn";
 import SignUp from "./components/users/SignUp";
 import { getCurrentUser } from "./api/auth";
 import Cookies from "js-cookie";
-import UserPost from "./components/users/UserPost";
 import { Profile } from "./components/users/Profile";
 
 export const AuthContext = createContext();
