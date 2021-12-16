@@ -2265,3 +2265,18 @@ export default ListTable;
 
 いいね機能の条件分岐は find メソッドを使い、likes 配列の中の userId の中に
 currentUser.id が入っているかを調べ、入っていたら削除、無かったら作成するような作りにする。
+
+いいね機能の関数の中に、成功した場合、最後に posts データ一覧の更新をすることで非同期で表示がされるようになる。
+そのため、List コンポーネントから handleGetList 関数を props で渡している。
+
+```
+const handleCreateLike = async (item) => {
+    try {
+      const res = await createLike(item.id);
+      console.log(res.data);
+      handleGetList(); // posts一覧を再取得
+    } catch (e) {
+      console.log(e);
+    }
+  };
+```
