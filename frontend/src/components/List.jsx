@@ -83,6 +83,9 @@ const List = () => {
       {isSignedIn && currentUser && <p>ログイン状態です</p>}
       <AuthButtons />
       <h1>Home</h1>
+      <p>
+        <Link to={`/users/${currentUser.id}`}>マイページ</Link>
+      </p>
       <button onClick={() => history.push("/new")}>新規作成</button>
       <ListTable
         dataList={dataList}

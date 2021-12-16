@@ -2440,3 +2440,14 @@ export const Profile = () => {
 };
 
 ```
+
+## ホーム画面にログインユーザーのプロフィールリンクを配置
+
+src/components/List.jsx
+
+```
+# 追加
+<p>
+    <Link to={`/users/${currentUser.id}`}>マイページ</Link>
+</p>
+```
