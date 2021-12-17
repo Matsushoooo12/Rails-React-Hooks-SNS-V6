@@ -24,7 +24,8 @@ class Api::V1::PostsController < ApplicationController
             title: post.title,
             content: post.content,
             created_at: post.created_at,
-            user: post.user
+            user: post.user,
+            likes: post.likes
         }
         render json: post_list
     end

@@ -84,7 +84,7 @@ const List = () => {
       <AuthButtons />
       <h1>Home</h1>
       <p>
-        <Link to={`/users/${currentUser.id}`}>マイページ</Link>
+        <Link to={`/users/${currentUser.id}`}>{currentUser.email}</Link>
       </p>
       <button onClick={() => history.push("/new")}>新規作成</button>
       <ListTable

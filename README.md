@@ -2509,3 +2509,108 @@ return (
     </>
 );
 ```
+
+## 投稿詳細画面にいいね機能をつける
+
+app/controllers/api/v1/posts_controller.rb
+
+```
+def show
+    post = Post.find(params[:id])
+    post_list = {
+        id: post.id,
+        user_id: post.user_id,
+        title: post.title,
+        content: post.content,
+        created_at: post.created_at,
+        user: post.user,
+        # 追加
+        likes: post.likes
+    }
+    render json: post_list
+end
+```
+
+src/components/Detail.jsx
+
+```
+import React, { useContext // 追加, useEffect, useState } from "react";
+import { useHistory, useParams, Link } from "react-router-dom";
+import { createLike, deleteLike } from "../api/like";
+import { getDetail } from "../api/post";
+// 追加
+import { AuthContext } from "../App";
+
+const Detail = () => {
+　// 追加
+  const { currentUser } = useContext(AuthContext);
+  const [data, setData] = useState({});
+
+  const query = useParams();
+  const history = useHistory();
+
+  // ここから追加
+  // いいね機能関数
+  const handleCreateLike = async (item) => {
+    try {
+      const res = await createLike(item.id);
+      console.log(res.data);
+      handleGetDetail(item);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const handleDeleteLike = async (item) => {
+    try {
+      const res = await deleteLike(item.id);
+      console.log(res.data);
+      handleGetDetail(item);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+  // ここまで追加
+
+  const handleGetDetail = async (query) => {
+    try {
+      const res = await getDetail(query.id);
+      console.log(res.data);
+      setData(res.data);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  useEffect(() => {
+    handleGetDetail(query);
+  }, [query]);
+  return (
+    <>
+      <h1>Detail</h1>
+      <div>
+        <Link to={`/users/${data.user?.id}`}>{data.user?.email}</Link>
+      </div>
+      <div>ID:{data.id}</div>
+      <div>タイトル：{data.title}</div>
+      <div>内容：{data.content}</div>
+      // ここから追加
+      <div>
+        {data.likes?.find((like) => like.userId === currentUser.id) ? (
+          <p onClick={() => handleDeleteLike(data)}>♡{data.likes?.length}</p>
+        ) : (
+          <p onClick={() => handleCreateLike(data)}>♡{data.likes?.length}</p>
+        )}
+      </div>
+      // ここまで追加
+      <div>
+        <Link to={`/edit/${data.id}`}>更新</Link>
+      </div>
+      <button onClick={() => history.push("/")}>戻る</button>
+    </>
+  );
+};
+
+export default Detail;
+
+```
