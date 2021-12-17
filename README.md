@@ -2451,3 +2451,61 @@ src/components/List.jsx
     <Link to={`/users/${currentUser.id}`}>マイページ</Link>
 </p>
 ```
+
+## 投稿詳細にユーザー情報を入れる
+
+app/controllers/api/v1/posts_controller.rb
+
+```
+# 修正
+def show
+    post = Post.find(params[:id])
+    post_list = {
+        id: post.id,
+        user_id: post.user_id,
+        title: post.title,
+        content: post.content,
+        created_at: post.created_at,
+        user: post.user
+    }
+    render json: post_list
+end
+```
+
+src/components/Detail.jsx
+
+```
+return (
+    <>
+      <h1>Detail</h1>
+      # 追加
+      <div>{data.user?.email}</div>
+      <div>ID:{data.id}</div>
+      <div>タイトル：{data.title}</div>
+      <div>内容：{data.content}</div>
+      <button onClick={() => history.push("/")}>戻る</button>
+    </>
+);
+```
+
+`TypeError: Cannot read properties of undefined`というエラーが出たときはそのプロパティがあるかどうかを判定する`?`をつければ大抵解決する。
+
+## 投稿詳細画面のユーザーメールアドレスをクリックするとそのユーザーのページに遷移するリンクを配置
+
+src/components/Detail.jsx
+
+```
+return (
+    <>
+      <h1>Detail</h1>
+      # 追加
+      <div>
+        <Link to={`/users/${data.user?.id}`}>{data.user?.email}</Link>
+      </div>
+      <div>ID:{data.id}</div>
+      <div>タイトル：{data.title}</div>
+      <div>内容：{data.content}</div>
+      <button onClick={() => history.push("/")}>戻る</button>
+    </>
+);
+```
