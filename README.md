@@ -2703,3 +2703,124 @@ export const Profile = () => {
 };
 
 ```
+
+## プロフィール画面上にいいねした投稿一覧表示
+
+app/controllers/api/v1/users_controller.rb
+
+```
+class Api::V1::UsersController < ApplicationController
+    def show
+        user = User.find(params[:id])
+        posts = Post.where(user_id: user.id)
+        user_likes = Like.where(user_id: user.id)
+        user_list = {
+            id: user.id,
+            email: user.email,
+            posts: posts.map {|post| {id: post.id, title: post.title, content: post.content, likes: post.likes}},
+            # 追加
+            like_posts: user_likes.map {|like| {id: like.id, post_id: like.post_id, user_id: like.user_id, post: Post.where(id: like.post_id), post_user: Post.where(id: like.post_id)[0].user, likes_count: Post.where(id: like.post_id)[0].likes}}
+        }
+        render json: user_list
+    end
+end
+```
+
+src/components/users/Profile.jsx
+
+```
+import { useState, useEffect, useContext } from "react";
+import { useHistory, useParams } from "react-router-dom";
+import { createLike, deleteLike } from "../../api/like";
+import { getUser } from "../../api/user";
+import { AuthContext } from "../../App";
+
+export const Profile = () => {
+  const { currentUser } = useContext(AuthContext);
+  const [user, setUser] = useState({});
+  const history = useHistory();
+  const query = useParams();
+
+  // いいね機能関数
+  const handleCreateLike = async (item, user) => {
+    try {
+      const res = await createLike(item.id);
+      console.log(res.data);
+      handleGetUser(user);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const handleDeleteLike = async (item, user) => {
+    try {
+      const res = await deleteLike(item.id);
+      console.log(res.data);
+      handleGetUser(user);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const handleGetUser = async (query) => {
+    try {
+      const res = await getUser(query.id);
+      console.log(res.data);
+      setUser(res.data);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  useEffect(() => {
+    handleGetUser(query);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+  return (
+    <>
+      <h1>ユーザー</h1>
+      <button onClick={() => history.push("/")}>戻る</button>
+      <div>メールアドレス：{user.email}</div>
+      {user.id === currentUser.id && <p>現在のユーザーです</p>}
+      <h2>ユーザーの投稿</h2>
+      <div>
+        {user.posts?.map((post) => (
+          <div key={post.id}>
+            <p>{post.title}</p>
+            <p>{post.content}</p>
+            <div>
+              {post.likes?.find((like) => like.userId === currentUser.id) ? (
+                <p onClick={() => handleDeleteLike(post, user)}>
+                  ♡{post.likes?.length}
+                </p>
+              ) : (
+                <p onClick={() => handleCreateLike(post, user)}>
+                  ♡{post.likes?.length}
+                </p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      // ここから追加
+      <h2>ユーザーがいいねした投稿</h2>
+      <div>
+        {user.likePosts?.map((likePost) => (
+          <div key={likePost.id}>
+            <p>{likePost.postUser?.email}</p>
+            <p>{likePost.post[0]?.title}</p>
+            <p>{likePost.post[0]?.content}</p>
+            <p>♡{likePost.likesCount.length}</p>
+            // 単純にいいね機能をつけてしまうと、いいねを外した段階でここから消えてしまうため、お気に入りから削除するというUIにした。
+            <p onClick={() => handleDeleteLike(likePost.post[0], user)}>
+              お気に入りから削除
+            </p>
+          </div>
+        ))}
+      </div>
+      # ここまで追加
+    </>
+  );
+};
+
+```

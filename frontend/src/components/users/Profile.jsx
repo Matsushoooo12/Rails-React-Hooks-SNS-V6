@@ -48,8 +48,10 @@ export const Profile = () => {
   return (
     <>
       <h1>ユーザー</h1>
+      <button onClick={() => history.push("/")}>戻る</button>
       <div>メールアドレス：{user.email}</div>
       {user.id === currentUser.id && <p>現在のユーザーです</p>}
+      <h2>ユーザーの投稿</h2>
       <div>
         {user.posts?.map((post) => (
           <div key={post.id}>
@@ -69,7 +71,20 @@ export const Profile = () => {
           </div>
         ))}
       </div>
-      <button onClick={() => history.push("/")}>戻る</button>
+      <h2>ユーザーがいいねした投稿</h2>
+      <div>
+        {user.likePosts?.map((likePost) => (
+          <div key={likePost.id}>
+            <p>{likePost.postUser?.email}</p>
+            <p>{likePost.post[0]?.title}</p>
+            <p>{likePost.post[0]?.content}</p>
+            <p>♡{likePost.likesCount.length}</p>
+            <p onClick={() => handleDeleteLike(likePost.post[0], user)}>
+              お気に入りから削除
+            </p>
+          </div>
+        ))}
+      </div>
     </>
   );
 };
