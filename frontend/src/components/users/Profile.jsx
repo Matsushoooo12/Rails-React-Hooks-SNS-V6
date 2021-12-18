@@ -33,11 +33,11 @@ export const Profile = () => {
   };
 
   // フォロー機能関数
-  const handleCreateFollow = async (item, user) => {
+  const handleCreateFollow = async (item) => {
     try {
       const res = await createFollow(item.id);
       console.log(res.data);
-      handleGetUser(user);
+      handleGetUser(item);
     } catch (e) {
       console.log(e);
     }
@@ -46,7 +46,7 @@ export const Profile = () => {
   const handleDeleteFollow = async (item) => {
     try {
       const res = await deleteFollow(item.id);
-      console.log(res);
+      console.log(res.data);
       handleGetUser(item);
     } catch (e) {
       console.log(e);
@@ -82,13 +82,9 @@ export const Profile = () => {
           {currentUser.followings?.find(
             (following) => user.id === following.id
           ) ? (
-            <div onClick={() => handleDeleteFollow(user, user)}>
-              フォローを外す
-            </div>
+            <div onClick={() => handleDeleteFollow(user)}>フォローを外す</div>
           ) : (
-            <div onClick={() => handleCreateFollow(user, user)}>
-              フォローをする
-            </div>
+            <div onClick={() => handleCreateFollow(user)}>フォローをする</div>
           )}
         </div>
       )}
