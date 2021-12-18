@@ -5,6 +5,8 @@ class Api::V1::UsersController < ApplicationController
         user_likes = Like.where(user_id: user.id)
         user_list = {
             id: user.id,
+            followings: user.followings,
+            followers: user.followers,
             email: user.email,
             posts: posts.map {|post| {id: post.id, title: post.title, content: post.content, likes: post.likes}},
             like_posts: user_likes.map {|like| {id: like.id, post_id: like.post_id, user_id: like.user_id, post: Post.where(id: like.post_id), post_user: Post.where(id: like.post_id)[0].user, likes_count: Post.where(id: like.post_id)[0].likes}}

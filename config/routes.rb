@@ -3,11 +3,16 @@ Rails.application.routes.draw do
     namespace :v1 do
       resources :posts do
         member do
-          resources :likes, only: ["create"]
+          resources :likes, only: [:create]
         end
       end
-      resources :likes, only: ["index","destroy"]
-      resources :users
+      resources :relationships, only: [:index, :destroy]
+      resources :likes, only: [:index, :destroy]
+      resources :users do
+        member do
+          resources :relationships, only: [:create]
+        end
+      end
       mount_devise_token_auth_for 'User', at: 'auth', controllers: {
         registrations: 'api/v1/auth/registrations'
       }

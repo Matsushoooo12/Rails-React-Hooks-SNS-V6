@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { useHistory, useParams } from "react-router-dom";
+import { createFollow, deleteFollow } from "../../api/follow";
 import { createLike, deleteLike } from "../../api/like";
 import { getUser } from "../../api/user";
 import { AuthContext } from "../../App";
@@ -31,6 +32,28 @@ export const Profile = () => {
     }
   };
 
+  // フォロー機能関数
+  const handleCreateFollow = async (item, user) => {
+    try {
+      const res = await createFollow(item.id);
+      console.log(res.data);
+      handleGetUser(user);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const handleDeleteFollow = async (item) => {
+    try {
+      const res = await deleteFollow(item.id);
+      console.log(res);
+      handleGetUser(item);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  // ユーザーを取得
   const handleGetUser = async (query) => {
     try {
       const res = await getUser(query.id);
@@ -45,12 +68,33 @@ export const Profile = () => {
     handleGetUser(query);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
+
+  console.log(currentUser);
   return (
     <>
       <h1>ユーザー</h1>
       <button onClick={() => history.push("/")}>戻る</button>
       <div>メールアドレス：{user.email}</div>
-      {user.id === currentUser.id && <p>現在のユーザーです</p>}
+      {user.id === currentUser.id ? (
+        <div>現在のユーザーです</div>
+      ) : (
+        <div>
+          {currentUser.followings?.find(
+            (following) => user.id === following.id
+          ) ? (
+            <div onClick={() => handleDeleteFollow(user, user)}>
+              フォローを外す
+            </div>
+          ) : (
+            <div onClick={() => handleCreateFollow(user, user)}>
+              フォローをする
+            </div>
+          )}
+        </div>
+      )}
+      <p>
+        フォロー数{user.followings?.length} フォロワー数{user.followers?.length}
+      </p>
       <h2>ユーザーの投稿</h2>
       <div>
         {user.posts?.map((post) => (

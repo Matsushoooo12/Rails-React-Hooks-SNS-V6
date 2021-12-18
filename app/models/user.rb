@@ -9,4 +9,29 @@ class User < ActiveRecord::Base
 
   has_many :posts, dependent: :destroy
   has_many :likes
+
+  # # has_many :relationships, class_name: "Relationship", foreign_key: "user_id"の意味
+  # has_many :relationships
+  # # user.followingsで「自分がフォローしているユーザー達」になる
+  # has_many :followings, through: :relationships, source: :follow
+  # # relationshipモデルの逆向きの架空モデルを作る
+  # has_many :reverse_of_relationships, class_name: 'Relationship', foreign_key: 'follow_id'
+  # # user.followersで「自分をフォローしているユーザー達」になる
+  # has_many :followers, through: :reverse_of_relationships, source: :user
+
+  has_many :relationships
+  has_many :followings, through: :relationships, source: :follow
+  has_many :reverse_of_relationships, class_name: 'Relationship', foreign_key: 'follow_id'
+  has_many :followers, through: :reverse_of_relationships, source: :user
+
+  def follow(other_user)
+    unless self == other_user
+      self.relationships.find_or_create_by(follow_id: other_user.id)
+    end
+  end
+
+  def unfollow(other_user)
+    relationship = self.relationships.find_by(follow_id: other_user.id)
+    relationship.destroy if relationship
+  end
 end
