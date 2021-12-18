@@ -4,7 +4,7 @@ class Api::V1::Auth::SessionsController < ApplicationController
             id: current_api_v1_user.id,
             email: current_api_v1_user.email,
             followings: current_api_v1_user.followings,
-            followers: current_api_v1_user.followers
+            followers: current_api_v1_user.followers,
         }
         if current_api_v1_user
             render json: {is_login: true, data: current_user }

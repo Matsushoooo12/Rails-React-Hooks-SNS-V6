@@ -6,7 +6,7 @@ import { getUser } from "../../api/user";
 import { AuthContext } from "../../App";
 
 export const Profile = () => {
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser, handleGetCurrentUser } = useContext(AuthContext);
   const [user, setUser] = useState({});
   const history = useHistory();
   const query = useParams();
@@ -35,9 +35,9 @@ export const Profile = () => {
   // フォロー機能関数
   const handleCreateFollow = async (item) => {
     try {
-      const res = await createFollow(item.id);
-      console.log(res.data);
+      await createFollow(item.id);
       handleGetUser(item);
+      handleGetCurrentUser();
     } catch (e) {
       console.log(e);
     }
@@ -45,9 +45,9 @@ export const Profile = () => {
 
   const handleDeleteFollow = async (item) => {
     try {
-      const res = await deleteFollow(item.id);
-      console.log(res.data);
+      await deleteFollow(item.id);
       handleGetUser(item);
+      handleGetCurrentUser();
     } catch (e) {
       console.log(e);
     }
@@ -57,7 +57,6 @@ export const Profile = () => {
   const handleGetUser = async (query) => {
     try {
       const res = await getUser(query.id);
-      console.log(res.data);
       setUser(res.data);
     } catch (e) {
       console.log(e);
@@ -69,7 +68,6 @@ export const Profile = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
-  console.log(currentUser);
   return (
     <>
       <h1>ユーザー</h1>

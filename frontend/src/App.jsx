@@ -61,6 +61,7 @@ function App() {
         setIsSignedIn,
         currentUser,
         setCurrentUser,
+        handleGetCurrentUser,
       }}
     >
       <BrowserRouter>
