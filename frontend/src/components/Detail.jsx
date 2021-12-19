@@ -61,9 +61,11 @@ const Detail = () => {
           <p onClick={() => handleCreateLike(data)}>♡{data.likes?.length}</p>
         )}
       </div>
-      <div>
-        <Link to={`/edit/${data.id}`}>更新</Link>
-      </div>
+      {currentUser.id === data.user?.id && (
+        <div>
+          <Link to={`/edit/${data.id}`}>更新</Link>
+        </div>
+      )}
       <button onClick={() => history.push("/")}>戻る</button>
     </>
   );

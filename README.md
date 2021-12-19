@@ -2603,9 +2603,11 @@ const Detail = () => {
         )}
       </div>
       // ここまで追加
+      {currentUser.id === data.user?.id && (
       <div>
         <Link to={`/edit/${data.id}`}>更新</Link>
       </div>
+      )}
       <button onClick={() => history.push("/")}>戻る</button>
     </>
   );
