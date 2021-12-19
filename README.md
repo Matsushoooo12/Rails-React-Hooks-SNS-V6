@@ -2824,3 +2824,304 @@ export const Profile = () => {
 };
 
 ```
+
+## フォロー機能作成
+
+作成手順
+
+1. Relationship モデルを作る
+2. Relationship のマイグレーションファイルを編集&実行
+3. user モデルと Relationship モデルにアソシエーションを書く
+4. relationships コントローラで API を作成
+5. ルーティング設定
+6. フロントエンドで API 設定
+7. 表示実装
+
+### 1. Relationship モデルを作る
+
+user テーブル同士で「多対多」の関係を作ります。
+
+何故ならフォロワーもまた user だからです。イメージとしては user テーブル同士を relationships という中間テーブルでアソシエーションを組むイメージ
+
+```
+$ rails g model Relationship
+```
+
+### 2. Relationship のマイグレーションファイルを編集&実行
+
+db/migrate/年月日時\_create_relationships.rb
+
+```
+class CreateRelationships < ActiveRecord::Migration[5.0]
+  def change
+    create_table :relationships do |t|
+      t.references :user, foreign_key: true
+      t.references :follow, foreign_key: { to_table: :users }
+
+      t.timestamps
+
+      t.index [:user_id, :follow_id], unique: true
+    end
+  end
+end
+```
+
+```
+$ rails db:migrate
+```
+
+### 3. user モデルと Relationship モデルにアソシエーションを書く
+
+app/models/relationship.rb
+
+```
+class Relationship < ApplicationRecord
+  belongs_to :user
+  belongs_to :follow, class_name: 'User'
+
+  validates :user_id, presence: true
+  validates :follow_id, presence: true
+end
+```
+
+class_name: ‘User’ と補足設定することで、Follow クラスという存在しないクラスを参照することを防ぎ、User クラスであることを明示しています。
+
+app/models/user.rb
+
+```
+class User < ApplicationRecord
+  has_many :relationships
+  has_many :followings, through: :relationships, source: :follow
+  has_many :reverse_of_relationships, class_name: 'Relationship', foreign_key: 'follow_id'
+  has_many :followers, through: :reverse_of_relationships, source: :user
+end
+```
+
+- foregin_key = 入口
+- source = 出口
+- through: :relationships は「中間テーブルは relationships だよ」って設定してあげてるだけ
+- user.followings と打つだけで、user が中間テーブル relationships を取得し、その 1 つ 1 つの relationship の follow_id から、「フォローしている User 達」を取得
+
+### 4. relationships コントローラで API を作成
+
+```
+$　rails g controller api/v1/relationships
+```
+
+app/controllers/api/v1/relationships_controller.rb
+
+```
+class Api::V1::RelationshipsController < ApplicationController
+
+    def index
+        relationships = Relationship.all.order(created_at: :desc)
+        render json: relationships
+    end
+
+    def create
+        relationship = Relationship.new(follow_id: params[:id], user_id: current_api_v1_user.id)
+        if relationship.save
+            render json: relationship
+        else
+            render json: relationship.errors, status: 422
+        end
+    end
+
+    def destroy
+        relationship = Relationship.find_by(follow_id: params[:id], user_id: current_api_v1_user.id)
+        if relationship.destroy
+            render json: relationship
+        else
+            render json: relationship.errors, status: 422
+        end
+    end
+end
+
+```
+
+### 5. ルーティング設定
+
+config/routes.rb
+
+```
+# 追加
+resources :relationships, only: [:index, :destroy]
+# 編集＆追加
+resources :users do
+  member do
+    resources :relationships, only: [:create]
+  end
+end
+```
+
+### 6. フロントエンドで API 設定
+
+src/api/follow.js
+
+```
+import client from "./client";
+import Cookies from "js-cookie";
+
+export const createFollow = (id) => {
+  return client.post(
+    `/users/${id}/relationships`,
+    {},
+    {
+      headers: {
+        "access-token": Cookies.get("_access_token"),
+        client: Cookies.get("_client"),
+        uid: Cookies.get("_uid"),
+      },
+    }
+  );
+};
+
+export const deleteFollow = (id) => {
+  return client.delete(`/relationships/${id}`, {
+    headers: {
+      "access-token": Cookies.get("_access_token"),
+      client: Cookies.get("_client"),
+      uid: Cookies.get("_uid"),
+    },
+  });
+};
+
+```
+
+### 7. 表示実装
+
+src/components/users/Profile.jsx
+
+```
+import { useState, useEffect, useContext } from "react";
+import { useHistory, useParams } from "react-router-dom";
+import { createFollow, deleteFollow } from "../../api/follow";
+import { createLike, deleteLike } from "../../api/like";
+import { getUser } from "../../api/user";
+import { AuthContext } from "../../App";
+
+export const Profile = () => {
+  const { currentUser, handleGetCurrentUser } = useContext(AuthContext);
+  const [user, setUser] = useState({});
+  const history = useHistory();
+  const query = useParams();
+
+  // いいね機能関数
+  const handleCreateLike = async (item, user) => {
+    try {
+      const res = await createLike(item.id);
+      console.log(res.data);
+      handleGetUser(user);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const handleDeleteLike = async (item, user) => {
+    try {
+      const res = await deleteLike(item.id);
+      console.log(res.data);
+      handleGetUser(user);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  // ここから追加
+  // フォロー機能関数
+  const handleCreateFollow = async (item) => {
+    try {
+      await createFollow(item.id);
+      handleGetCurrentUser();
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const handleDeleteFollow = async (item) => {
+    try {
+      await deleteFollow(item.id);
+      handleGetCurrentUser();
+    } catch (e) {
+      console.log(e);
+    }
+  };
+  // ここまで追加
+
+  // ユーザーを取得
+  const handleGetUser = async (query) => {
+    try {
+      const res = await getUser(query.id);
+      setUser(res.data);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  useEffect(() => {
+    handleGetUser(query);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+
+  return (
+    <>
+      <h1>ユーザー</h1>
+      <button onClick={() => history.push("/")}>戻る</button>
+      <div>メールアドレス：{user.email}</div>
+      // ここから編集＆追加
+      {user.id === currentUser.id ? (
+        <div>現在のユーザーです</div>
+      ) : (
+        <div>
+          {currentUser.followings?.find(
+            (following) => user.id === following.id
+          ) ? (
+            <div onClick={() => handleDeleteFollow(user)}>フォローを外す</div>
+          ) : (
+            <div onClick={() => handleCreateFollow(user)}>フォローをする</div>
+          )}
+        </div>
+      )}
+      <p>
+        フォロー数{user.followings?.length} フォロワー数{user.followers?.length}
+      </p>
+      // ここまで編集＆追加
+      <h2>ユーザーの投稿</h2>
+      <div>
+        {user.posts?.map((post) => (
+          <div key={post.id}>
+            <p>{post.title}</p>
+            <p>{post.content}</p>
+            <div>
+              {post.likes?.find((like) => like.userId === currentUser.id) ? (
+                <p onClick={() => handleDeleteLike(post, user)}>
+                  ♡{post.likes?.length}
+                </p>
+              ) : (
+                <p onClick={() => handleCreateLike(post, user)}>
+                  ♡{post.likes?.length}
+                </p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      <h2>ユーザーがいいねした投稿</h2>
+      <div>
+        {user.likePosts?.map((likePost) => (
+          <div key={likePost.id}>
+            <p>{likePost.postUser?.email}</p>
+            <p>{likePost.post[0]?.title}</p>
+            <p>{likePost.post[0]?.content}</p>
+            <p>♡{likePost.likesCount.length}</p>
+            <p onClick={() => handleDeleteLike(likePost.post[0], user)}>
+              お気に入りから削除
+            </p>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+};
+
+```
