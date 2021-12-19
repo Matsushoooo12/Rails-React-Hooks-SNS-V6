@@ -36,7 +36,6 @@ export const Profile = () => {
   const handleCreateFollow = async (item) => {
     try {
       await createFollow(item.id);
-      handleGetUser(item);
       handleGetCurrentUser();
     } catch (e) {
       console.log(e);
@@ -46,7 +45,6 @@ export const Profile = () => {
   const handleDeleteFollow = async (item) => {
     try {
       await deleteFollow(item.id);
-      handleGetUser(item);
       handleGetCurrentUser();
     } catch (e) {
       console.log(e);
