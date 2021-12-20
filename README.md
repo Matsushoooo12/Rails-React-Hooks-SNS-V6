@@ -3127,3 +3127,244 @@ export const Profile = () => {
 };
 
 ```
+
+## コメント機能作成
+
+### Comment モデル作成
+
+```
+$ rails g model Comment
+```
+
+### マイグレーション設定＆実行
+
+db/migrate/年月日時\_create_relationships.rb
+
+```
+class CreateComments < ActiveRecord::Migration[6.1]
+  def change
+    create_table :comments do |t|
+      t.text :content
+      t.references :user, null: false, foreign_key: true
+      t.references :post, null: false, foreign_key: true
+
+      t.timestamps
+    end
+  end
+end
+```
+
+```
+$ rails db:migrate
+```
+
+### モデルアソシエーション設定
+
+app/models/comment.rb
+
+```
+class Comment < ApplicationRecord
+  belongs_to :user
+  belongs_to :post
+end
+```
+
+app/models/user.rb
+
+```
+# 追加
+has_many :comments, dependent: :destroy
+```
+
+app/models/post.rb
+
+```
+# 追加
+has_many :comments, dependent: :destroy
+```
+
+### comments コントローラー作成
+
+app/controllers/api/v1/comments_controller.rb
+
+```
+class Api::V1::CommentsController < ApplicationController
+
+    def create
+        comment = current_api_v1_user.comments.new(post_id: params[:post_id], user_id: current_api_v1_user.id, content: params[:content])
+        if comment.save
+            render json: comment
+        else
+            render json: comment.errors, status: 422
+        end
+    end
+end
+```
+
+### ルーティング設定
+
+```
+resources :posts do
+  # 追加
+  resources :comments, only: [:create]
+  member do
+    resources :likes, only: [:create]
+  end
+end
+```
+
+### フロントエンド API 設定
+
+src/api/comment.js
+
+```
+import client from "./client";
+import Cookies from "js-cookie";
+
+export const createComment = (id, params) => {
+  return client.post(`/posts/${id}/comments`, params, {
+    headers: {
+      "access-token": Cookies.get("_access_token"),
+      client: Cookies.get("_client"),
+      uid: Cookies.get("_uid"),
+    },
+  });
+};
+```
+
+### 表示作成
+
+src/components/Detail.jsx
+
+```
+import React, { useContext, useEffect, useState } from "react";
+import { useHistory, useParams, Link } from "react-router-dom";
+import { createComment } from "../api/comment";
+import { createLike, deleteLike } from "../api/like";
+import { getDetail } from "../api/post";
+import { AuthContext } from "../App";
+
+const Detail = () => {
+  const { currentUser } = useContext(AuthContext);
+  const [data, setData] = useState({});
+
+  // commentValue
+  const [commentValue, setCommentValue] = useState({
+    content: "",
+  });
+
+  const query = useParams();
+  const history = useHistory();
+
+  // いいね機能関数
+  const handleCreateLike = async (item) => {
+    try {
+      const res = await createLike(item.id);
+      console.log(res.data);
+      handleGetDetail(item);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const handleDeleteLike = async (item) => {
+    try {
+      const res = await deleteLike(item.id);
+      console.log(res.data);
+      handleGetDetail(item);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  // ここから追加
+  // コメント機能関数
+  const handleChange = (e) => {
+    setCommentValue({
+      ...commentValue,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e, id) => {
+    e.preventDefault();
+    try {
+      const res = await createComment(id, commentValue);
+      console.log(res.data);
+      history.push(`/post/${data.id}`);
+    } catch (e) {
+      console.log(e);
+    }
+    setCommentValue({
+      content: "",
+    });
+  };
+  // ここまで追加
+
+  const handleGetDetail = async (query) => {
+    try {
+      const res = await getDetail(query.id);
+      console.log(res.data);
+      setData(res.data);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  useEffect(() => {
+    handleGetDetail(query);
+  }, [query]);
+  return (
+    <>
+      <h1>Detail</h1>
+      <div>
+        <Link to={`/users/${data.user?.id}`}>{data.user?.email}</Link>
+      </div>
+      <div>ID:{data.id}</div>
+      <div>タイトル：{data.title}</div>
+      <div>内容：{data.content}</div>
+      <div>
+        {data.likes?.find((like) => like.userId === currentUser.id) ? (
+          <p onClick={() => handleDeleteLike(data)}>♡{data.likes?.length}</p>
+        ) : (
+          <p onClick={() => handleCreateLike(data)}>♡{data.likes?.length}</p>
+        )}
+      </div>
+      {currentUser.id === data.user?.id && (
+        <div>
+          <Link to={`/edit/${data.id}`}>更新</Link>
+        </div>
+      )}
+      // ここから追加
+      <form>
+        <div>
+          <label htmlFor="content">コメント</label>
+          <input
+            type="text"
+            id="content"
+            name="content"
+            onChange={(e) => handleChange(e)}
+            value={commentValue.content}
+          />
+        </div>
+        <input
+          type="submit"
+          value="コメントする"
+          onClick={(e) => handleSubmit(e, data.id)}
+        />
+      </form>
+      {data.comments?.map((comment) => (
+        <div key={comment.id}>
+          <p>{comment.user[0].email}</p>
+          <p>{comment.id}</p>
+          <p>{comment.content}</p>
+        </div>
+      ))}
+      // ここまで追加
+      <button onClick={() => history.push("/")}>戻る</button>
+    </>
+  );
+};
+
+export default Detail;
+```
