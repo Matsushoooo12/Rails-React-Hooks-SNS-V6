@@ -8,20 +8,16 @@ class User < ActiveRecord::Base
   include DeviseTokenAuth::Concerns::User
 
   has_many :posts, dependent: :destroy
-  has_many :likes
+  has_many :likes, dependent: :destroy
+  has_many :comments, dependent: :destroy
 
-  # # has_many :relationships, class_name: "Relationship", foreign_key: "user_id"の意味
-  # has_many :relationships
-  # # user.followingsで「自分がフォローしているユーザー達」になる
-  # has_many :followings, through: :relationships, source: :follow
-  # # relationshipモデルの逆向きの架空モデルを作る
-  # has_many :reverse_of_relationships, class_name: 'Relationship', foreign_key: 'follow_id'
-  # # user.followersで「自分をフォローしているユーザー達」になる
-  # has_many :followers, through: :reverse_of_relationships, source: :user
-
+  # has_many :relationships, class_name: "Relationship", foreign_key: "user_id"の意味
   has_many :relationships
+  # user.followingsで「自分がフォローしているユーザー達」になる
   has_many :followings, through: :relationships, source: :follow
+  # relationshipモデルの逆向きの架空モデルを作る
   has_many :reverse_of_relationships, class_name: 'Relationship', foreign_key: 'follow_id'
+  # user.followersで「自分をフォローしているユーザー達」になる
   has_many :followers, through: :reverse_of_relationships, source: :user
 
   def follow(other_user)

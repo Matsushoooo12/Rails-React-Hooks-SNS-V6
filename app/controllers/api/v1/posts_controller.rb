@@ -25,7 +25,8 @@ class Api::V1::PostsController < ApplicationController
             content: post.content,
             created_at: post.created_at,
             user: post.user,
-            likes: post.likes
+            likes: post.likes,
+            comments: post.comments.map {|comment| {id: comment.id, content: comment.content, user: User.where(id: comment.user_id), user_id: comment.user_id, post_id: comment.post_id}}
         }
         render json: post_list
     end
