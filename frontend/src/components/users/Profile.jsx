@@ -85,7 +85,8 @@ export const Profile = () => {
         </div>
       )}
       <p>
-        フォロー数{user.followings?.length} フォロワー数{user.followers?.length}
+        フォロー数{user.followings?.length}
+        フォロワー数{user.followers?.length}
       </p>
       <h2>ユーザーの投稿</h2>
       <div>
@@ -118,6 +119,22 @@ export const Profile = () => {
             <p onClick={() => handleDeleteLike(likePost.post[0], user)}>
               お気に入りから削除
             </p>
+          </div>
+        ))}
+      </div>
+      <h2>フォロー表示</h2>
+      <div>
+        {user.followings?.map((following) => (
+          <div key={following.id}>
+            <p>{following.email}</p>
+          </div>
+        ))}
+      </div>
+      <h2>フォロワー表示</h2>
+      <div>
+        {user.followers?.map((follower) => (
+          <div key={follower.id}>
+            <p>{follower.email}</p>
           </div>
         ))}
       </div>
