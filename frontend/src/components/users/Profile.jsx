@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { useHistory, useParams } from "react-router-dom";
+import { useHistory, useParams, Link } from "react-router-dom";
 import { createFollow, deleteFollow } from "../../api/follow";
 import { createLike, deleteLike } from "../../api/like";
 import { getUser } from "../../api/user";
@@ -85,8 +85,12 @@ export const Profile = () => {
         </div>
       )}
       <p>
-        フォロー数{user.followings?.length}
-        フォロワー数{user.followers?.length}
+        <Link to={`/following/${user.id}`}>
+          フォロー数{user.followings?.length}
+        </Link>
+        <Link to={`/follower/${user.id}`}>
+          フォロワー数{user.followers?.length}
+        </Link>
       </p>
       <h2>ユーザーの投稿</h2>
       <div>
