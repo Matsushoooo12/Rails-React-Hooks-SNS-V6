@@ -1,11 +1,9 @@
-import { useContext, useState } from "react";
-import { AuthContext } from "../App";
+import { useState } from "react";
 import { FollowerList } from "./follow/FollowerList";
 import { FollowingList } from "./follow/FollowingList";
 
 export const Friends = (props) => {
   const [showFollower, setShowFollower] = useState(props.showFollower);
-  const { currentUser, handleGetCurrentUser } = useContext(AuthContext);
   return (
     <div>
       <button onClick={() => setShowFollower(true)} disabled={showFollower}>
