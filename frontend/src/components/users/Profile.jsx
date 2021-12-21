@@ -126,22 +126,6 @@ export const Profile = () => {
           </div>
         ))}
       </div>
-      <h2>フォロー表示</h2>
-      <div>
-        {user.followings?.map((following) => (
-          <div key={following.id}>
-            <p>{following.email}</p>
-          </div>
-        ))}
-      </div>
-      <h2>フォロワー表示</h2>
-      <div>
-        {user.followers?.map((follower) => (
-          <div key={follower.id}>
-            <p>{follower.email}</p>
-          </div>
-        ))}
-      </div>
     </>
   );
 };

@@ -5,6 +5,7 @@ import { getUser } from "../../api/user";
 
 export const FollowerList = memo(() => {
   const [followers, setFollowers] = useState([]);
+  const [user, setUser] = useState({});
   const query = useParams();
   const history = useHistory();
 
@@ -12,6 +13,7 @@ export const FollowerList = memo(() => {
     try {
       const res = await getUser(query.id);
       setFollowers(res.data.followers);
+      setUser(res.data);
     } catch (e) {
       console.log(e);
     }
@@ -29,7 +31,7 @@ export const FollowerList = memo(() => {
           </p>
         </div>
       ))}
-      <button onClick={() => history.push("/")}>戻る</button>
+      <button onClick={() => history.push(`/users/${user.id}`)}>戻る</button>
     </div>
   );
 });
