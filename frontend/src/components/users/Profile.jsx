@@ -63,7 +63,6 @@ export const Profile = () => {
 
   useEffect(() => {
     handleGetUser(query);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
   return (

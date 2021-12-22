@@ -3128,6 +3128,416 @@ export const Profile = () => {
 
 ```
 
+### フォロー、フォロワー一覧ページ作成
+
+**一覧ページ**
+src/components/Friends.jsx
+
+```
+import { useState } from "react";
+import { FollowerList } from "./follow/FollowerList";
+import { FollowingList } from "./follow/FollowingList";
+
+export const Friends = (props) => {
+  const [showFollower, setShowFollower] = useState(props.showFollower);
+  return (
+    <div>
+      <button onClick={() => setShowFollower(true)} disabled={showFollower}>
+        フォロワー
+      </button>
+      <button onClick={() => setShowFollower(false)} disabled={!showFollower}>
+        フォロー中
+      </button>
+      <hr />
+      {showFollower ? <FollowerList /> : <FollowingList />}
+    </div>
+  );
+};
+```
+
+**フォロー一覧**
+
+src/components/follow/FollowingList.jsx
+
+```
+import { memo, useContext, useEffect, useState } from "react";
+import { useHistory, useParams } from "react-router";
+import { Link } from "react-router-dom";
+import { deleteFollow } from "../../api/follow";
+import { getUser } from "../../api/user";
+import { AuthContext } from "../../App";
+
+export const FollowingList = memo(() => {
+  const [followings, setFollowings] = useState([]);
+  const { currentUser, handleGetCurrentUser } = useContext(AuthContext);
+  const [user, setUser] = useState({});
+  const query = useParams();
+  const history = useHistory();
+
+  const handleGetFollowings = async (query) => {
+    try {
+      const res = await getUser(query.id);
+      setFollowings(res.data.followings);
+      setUser(res.data);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const handleDeleteFollow = async (item) => {
+    try {
+      await deleteFollow(item.id);
+      handleGetCurrentUser();
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  useEffect(() => {
+    handleGetFollowings(query);
+  }, [query]);
+  return (
+    <div>
+      <h1>フォロー中</h1>
+      {followings?.map((following) => (
+        <div key={following.id}>
+          <p>
+            <Link to={`/users/${following.id}`}>{following.email}</Link>
+            {currentUser.id === user.id && (
+              <span onClick={() => handleDeleteFollow(following)}>
+                フォローを外す
+              </span>
+            )}
+          </p>
+        </div>
+      ))}
+      <button onClick={() => history.push(`/users/${user.id}`)}>戻る</button>
+    </div>
+  );
+});
+```
+
+**フォロワー一覧**
+
+src/components/follow/FollowerList.jsx
+
+```
+import { memo, useContext, useEffect, useState } from "react";
+import { useHistory, useParams } from "react-router";
+import { Link } from "react-router-dom";
+import { createFollow, deleteFollow } from "../../api/follow";
+import { getUser } from "../../api/user";
+import { AuthContext } from "../../App";
+
+export const FollowerList = memo(() => {
+  const [followers, setFollowers] = useState([]);
+  const { currentUser, handleGetCurrentUser } = useContext(AuthContext);
+  const [user, setUser] = useState({});
+  const query = useParams();
+  const history = useHistory();
+
+  const handleGetFollowers = async (query) => {
+    try {
+      const res = await getUser(query.id);
+      setFollowers(res.data.followers);
+      setUser(res.data);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  // フォロー機能関数
+  const handleCreateFollow = async (item) => {
+    try {
+      await createFollow(item.id);
+      handleGetCurrentUser();
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const handleDeleteFollow = async (item) => {
+    try {
+      await deleteFollow(item.id);
+      handleGetCurrentUser();
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  useEffect(() => {
+    handleGetFollowers(query);
+  }, [query]);
+  return (
+    <div>
+      <h1>フォロワー</h1>
+      {followers?.map((follower) => (
+        <div key={follower.id}>
+          <p>
+            <Link to={`/users/${follower.id}`}>{follower.email}</Link>
+            {currentUser.id === user.id && (
+              <>
+                {currentUser.followings?.find(
+                  (follow) => follow.id === follower.id
+                ) ? (
+                  <span onClick={() => handleDeleteFollow(follower)}>
+                    フォローを外す
+                  </span>
+                ) : (
+                  <span onClick={() => handleCreateFollow(follower)}>
+                    フォローをする
+                  </span>
+                )}
+              </>
+            )}
+          </p>
+        </div>
+      ))}
+      <button onClick={() => history.push(`/users/${user.id}`)}>戻る</button>
+    </div>
+  );
+});
+```
+
+**ルーティング設定**
+
+src/App.jsx
+
+```
+import React, { useState, useEffect, createContext } from "react";
+import { BrowserRouter, Switch, Route, Redirect } from "react-router-dom";
+import Detail from "./components/Detail";
+import Edit from "./components/Edit";
+import List from "./components/List";
+import New from "./components/New";
+import SignIn from "./components/users/SignIn";
+import SignUp from "./components/users/SignUp";
+import { getCurrentUser } from "./api/auth";
+import Cookies from "js-cookie";
+import { Profile } from "./components/users/Profile";
+import { Friends } from "./components/Friends";
+
+export const AuthContext = createContext();
+
+function App() {
+  const [loading, setLoading] = useState(true);
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState({});
+
+  const handleGetCurrentUser = async () => {
+    try {
+      const res = await getCurrentUser();
+
+      if (res?.data.isLogin === true) {
+        setIsSignedIn(true);
+        setCurrentUser(res?.data.data);
+        console.log(res?.data.data);
+      } else {
+        console.log("no current user");
+        Cookies.remove("_access_token");
+        Cookies.remove("_client");
+        Cookies.remove("_uid");
+      }
+    } catch (e) {
+      console.log(e);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    handleGetCurrentUser();
+  }, [setCurrentUser]);
+
+  const Private = ({ children }) => {
+    if (!loading) {
+      if (isSignedIn) {
+        return children;
+      } else {
+        return <Redirect to="/signin" />;
+      }
+    } else {
+      return <></>;
+    }
+  };
+  return (
+    <AuthContext.Provider
+      value={{
+        loading,
+        setLoading,
+        isSignedIn,
+        setIsSignedIn,
+        currentUser,
+        setCurrentUser,
+        handleGetCurrentUser,
+      }}
+    >
+      <BrowserRouter>
+        <Switch>
+          <Route exact path="/signup" component={SignUp} />
+          <Route exact path="/signin" component={SignIn} />
+          <Private>
+            <Route exact path="/" component={List} />
+            <Route path="/post/:id" component={Detail} />
+            <Route exact path="/new" component={New} />
+            <Route path="/edit/:id" component={Edit} />
+            <Route path="/users/:id" component={Profile} />
+            // ここから追加
+            <Route path="/follower/:id">
+              <Friends showFollower />
+            </Route>
+            <Route path="/following/:id">
+              <Friends />
+            </Route>
+            // ここまで追加
+          </Private>
+        </Switch>
+      </BrowserRouter>
+    </AuthContext.Provider>
+  );
+}
+
+export default App;
+```
+
+**フォロー、フォロワー一覧に遷移するリンク配置**
+
+src/components/users/Profile.jsx
+
+```
+import { useState, useEffect, useContext } from "react";
+import { useHistory, useParams, Link } from "react-router-dom";
+import { createFollow, deleteFollow } from "../../api/follow";
+import { createLike, deleteLike } from "../../api/like";
+import { getUser } from "../../api/user";
+import { AuthContext } from "../../App";
+
+export const Profile = () => {
+  const { currentUser, handleGetCurrentUser } = useContext(AuthContext);
+  const [user, setUser] = useState({});
+  const history = useHistory();
+  const query = useParams();
+
+  // いいね機能関数
+  const handleCreateLike = async (item, user) => {
+    try {
+      const res = await createLike(item.id);
+      console.log(res.data);
+      handleGetUser(user);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const handleDeleteLike = async (item, user) => {
+    try {
+      const res = await deleteLike(item.id);
+      console.log(res.data);
+      handleGetUser(user);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  // フォロー機能関数
+  const handleCreateFollow = async (item) => {
+    try {
+      await createFollow(item.id);
+      handleGetCurrentUser();
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const handleDeleteFollow = async (item) => {
+    try {
+      await deleteFollow(item.id);
+      handleGetCurrentUser();
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  // ユーザーを取得
+  const handleGetUser = async (query) => {
+    try {
+      const res = await getUser(query.id);
+      setUser(res.data);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  useEffect(() => {
+    handleGetUser(query);
+  }, [query]);
+
+  return (
+    <>
+      <h1>ユーザー</h1>
+      <button onClick={() => history.push("/")}>戻る</button>
+      <div>メールアドレス：{user.email}</div>
+      {user.id === currentUser.id ? (
+        <div>現在のユーザーです</div>
+      ) : (
+        <div>
+          {currentUser.followings?.find(
+            (following) => user.id === following.id
+          ) ? (
+            <div onClick={() => handleDeleteFollow(user)}>フォローを外す</div>
+          ) : (
+            <div onClick={() => handleCreateFollow(user)}>フォローをする</div>
+          )}
+        </div>
+      )}
+      // ここから修正
+      <p>
+        <Link to={`/following/${user.id}`}>
+          フォロー数{user.followings?.length}
+        </Link>
+        <Link to={`/follower/${user.id}`}>
+          フォロワー数{user.followers?.length}
+        </Link>
+      </p>
+      // ここまで修正
+      <h2>ユーザーの投稿</h2>
+      <div>
+        {user.posts?.map((post) => (
+          <div key={post.id}>
+            <p>{post.title}</p>
+            <p>{post.content}</p>
+            <div>
+              {post.likes?.find((like) => like.userId === currentUser.id) ? (
+                <p onClick={() => handleDeleteLike(post, user)}>
+                  ♡{post.likes?.length}
+                </p>
+              ) : (
+                <p onClick={() => handleCreateLike(post, user)}>
+                  ♡{post.likes?.length}
+                </p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      <h2>ユーザーがいいねした投稿</h2>
+      <div>
+        {user.likePosts?.map((likePost) => (
+          <div key={likePost.id}>
+            <p>{likePost.postUser?.email}</p>
+            <p>{likePost.post[0]?.title}</p>
+            <p>{likePost.post[0]?.content}</p>
+            <p>♡{likePost.likesCount.length}</p>
+            <p onClick={() => handleDeleteLike(likePost.post[0], user)}>
+              お気に入りから削除
+            </p>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+};
+```
+
 ## コメント機能作成
 
 ### Comment モデル作成
