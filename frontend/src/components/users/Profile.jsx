@@ -70,6 +70,7 @@ export const Profile = () => {
       <h1>ユーザー</h1>
       <button onClick={() => history.push("/")}>戻る</button>
       <div>メールアドレス：{user.email}</div>
+      <div>ダイレクトメッセージ</div>
       {user.id === currentUser.id ? (
         <div>現在のユーザーです</div>
       ) : (
