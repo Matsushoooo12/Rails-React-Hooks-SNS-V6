@@ -5,7 +5,6 @@ import { Message } from "./Message";
 
 export const Dm = () => {
   const [rooms, setRooms] = useState([]);
-  const [messages, setMessages] = useState([]);
 
   console.log(rooms);
 
@@ -13,7 +12,6 @@ export const Dm = () => {
     try {
       const res = await getAllRooms();
       setRooms(res.data);
-      setMessages(res.data.messages);
     } catch (e) {
       console.log(e);
     }
@@ -33,11 +31,6 @@ export const Dm = () => {
                 <p>{user.email}</p>
               ))}
             </div>
-            {/* <div>
-              {room.messages?.map((message) => (
-                <p>{message.content}</p>
-              ))}
-            </div> */}
             <hr />
           </div>
         ))}
