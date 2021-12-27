@@ -3948,3 +3948,118 @@ const ListTable = memo((props) => {
 
 export default ListTable;
 ```
+
+## DM 機能作成
+
+### モデル作成
+
+Room モデル作成
+
+- ログインユーザーと相手のユーザーが入る DM の部屋
+
+```
+$ rails g model Room
+$ rails db:migrate
+```
+
+Entry モデル作成
+
+- どの User がどの Room に所属しているか
+
+```
+$ rails g model Entry user:references room:references
+$ rails db:migrate
+```
+
+Message モデル作成
+
+- User がどの Room でどんな Message を送ったか
+
+```
+$ rails g model Message user:references room:references content:text
+$ rails db:migrate
+```
+
+### コントローラー作成
+
+app/controllers/api/v1/rooms_controller.rb
+
+```
+class Api::V1::RoomsController < ApplicationController
+    before_action :authenticate_api_v1_user!, only: [:create]
+    def create
+        room = Room.create
+        Entry.create(room_id: room.id, user_id: current_api_v1_user.id)
+        Entry.create(room_id: room.id, user_id: params[:id])
+        room = Room.find_by(id: room.id)
+        render json: room
+    end
+
+    def show
+        room = Room.find(params[:id])
+        messages = room.messages
+        if Entry.where(user_id: current_api_v1_user.id, room_id: room.id).present?
+            render json: messages
+        else
+            render json: messages.errors, status: 422
+        end
+    end
+
+    def index
+        rooms = current_api_v1_user.rooms.to_json(include: %i[messages entries users])
+        render json: rooms
+    end
+end
+```
+
+app/controllers/api/v1/messages_controller.rb
+
+```
+class Api::V1::MessagesController < ApplicationController
+    def create
+        message = Message.create(user_id: current_api_v1_user.id, room_id: params[:id], content: params[:content])
+        render json: message
+    end
+end
+```
+
+### ルーティング設定
+
+config/routes.rb
+
+```
+Rails.application.routes.draw do
+  namespace :api do
+    namespace :v1 do
+      resources :posts do
+        resources :comments, only: [:create]
+        member do
+          resources :likes, only: [:create]
+        end
+      end
+      # 追加
+      resources :rooms, only: [:show, :index] do
+        member do
+          resources :messages, only: [:create]
+        end
+      end
+      resources :relationships, only: [:index, :destroy]
+      resources :likes, only: [:index, :destroy]
+      resources :users do
+        member do
+          resources :relationships, only: [:create]
+          # 追加
+          resources :rooms, only: [:create]
+        end
+      end
+      mount_devise_token_auth_for 'User', at: 'auth', controllers: {
+        registrations: 'api/v1/auth/registrations'
+      }
+
+      namespace :auth do
+        resources :sessions, only: %i[index]
+      end
+    end
+  end
+end
+```

@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { useHistory, useParams, Link } from "react-router-dom";
+import { createRoom } from "../../api/dm";
 import { createFollow, deleteFollow } from "../../api/follow";
 import { createLike, deleteLike } from "../../api/like";
 import { getUser } from "../../api/user";
@@ -51,6 +52,16 @@ export const Profile = () => {
     }
   };
 
+  // DmのRoom作成
+  const handleCreateRoom = async (item) => {
+    try {
+      await createRoom(item.id);
+      history.push("/dm");
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
   // ユーザーを取得
   const handleGetUser = async (query) => {
     try {
@@ -70,11 +81,13 @@ export const Profile = () => {
       <h1>ユーザー</h1>
       <button onClick={() => history.push("/")}>戻る</button>
       <div>メールアドレス：{user.email}</div>
-      <div>ダイレクトメッセージ</div>
       {user.id === currentUser.id ? (
-        <div>現在のユーザーです</div>
+        <>
+          <div>現在のユーザーです</div>
+        </>
       ) : (
         <div>
+          <div onClick={() => handleCreateRoom(user)}>ダイレクトメッセージ</div>
           {currentUser.followings?.find(
             (following) => user.id === following.id
           ) ? (

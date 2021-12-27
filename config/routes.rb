@@ -7,11 +7,17 @@ Rails.application.routes.draw do
           resources :likes, only: [:create]
         end
       end
+      resources :rooms, only: [:show, :index] do
+        member do
+          resources :messages, only: [:create]
+        end
+      end
       resources :relationships, only: [:index, :destroy]
       resources :likes, only: [:index, :destroy]
       resources :users do
         member do
           resources :relationships, only: [:create]
+          resources :rooms, only: [:create]
         end
       end
       mount_devise_token_auth_for 'User', at: 'auth', controllers: {

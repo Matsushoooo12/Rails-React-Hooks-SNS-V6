@@ -10,6 +10,7 @@ import { getCurrentUser } from "./api/auth";
 import Cookies from "js-cookie";
 import { Profile } from "./components/users/Profile";
 import { Friends } from "./components/Friends";
+import { Dm } from "./components/Dm";
 
 export const AuthContext = createContext();
 
@@ -81,6 +82,7 @@ function App() {
             <Route path="/following/:id">
               <Friends />
             </Route>
+            <Route exact path="/dm" component={Dm} />
           </Private>
         </Switch>
       </BrowserRouter>

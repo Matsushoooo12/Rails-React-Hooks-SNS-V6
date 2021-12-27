@@ -10,6 +10,9 @@ class User < ActiveRecord::Base
   has_many :posts, dependent: :destroy
   has_many :likes, dependent: :destroy
   has_many :comments, dependent: :destroy
+  has_many :messages, dependent: :destroy
+  has_many :entries, dependent: :destroy
+  has_many :rooms, through: :entries
 
   # has_many :relationships, class_name: "Relationship", foreign_key: "user_id"の意味
   has_many :relationships

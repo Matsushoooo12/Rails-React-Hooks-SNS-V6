@@ -15,7 +15,8 @@ const ListTable = memo((props) => {
     const newItems = dataList.filter((item) => {
       return (
         item.title.toLowerCase().indexOf(value) !== -1 ||
-        item.content.toLowerCase().indexOf(value) !== -1
+        item.content.toLowerCase().indexOf(value) !== -1 ||
+        item.email.toLowerCase().indexOf(value) !== -1
       );
     });
     setFilteredItems(newItems);
